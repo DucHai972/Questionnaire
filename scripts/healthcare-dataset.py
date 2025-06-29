@@ -163,15 +163,15 @@ def create_questionnaire_from_csv():
         
         # Create responses
         responses = []
-        for index, row in df.iterrows():
-            respondent_id = f"{index + 1}"
+        for idx, (index, row) in enumerate(df.iterrows()):
+            respondent_id = f"{idx + 1}"
             answers = {}
             
             for column in df.columns:
                 question_id = f"{column}"
                 value = row[column]
                 
-                if pd.isna(value):
+                if value is None or (isinstance(value, (int, float)) and pd.isna(value)) or str(value).lower() == 'nan':
                     continue  # Skip NaN values
                 
                 if column_mappings[column] is not None:
