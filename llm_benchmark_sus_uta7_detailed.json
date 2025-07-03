@@ -1,0 +1,631 @@
+{
+  "metadata": {
+    "dataset": "sus_uta7",
+    "total_tests": 60,
+    "timestamp": "2025-06-30 08:17:09",
+    "format_count": 5,
+    "task_count": 6
+  },
+  "task_summaries": [
+    {
+      "task_name": "Task 1",
+      "average_score": 0.7263051184878802,
+      "format_scores": {
+        "json": 0.9558097455085883,
+        "html": 0.6899917798441662,
+        "xml": 0.8634731050173855,
+        "markdown": 0.6055659263834934,
+        "txt": 0.5166850356857677
+      },
+      "best_format": "json",
+      "worst_format": "txt"
+    },
+    {
+      "task_name": "Task 2",
+      "average_score": 0.5126146844410874,
+      "format_scores": {
+        "json": 0.6606782956971999,
+        "html": 0.47133452281526095,
+        "xml": 0.615648885326872,
+        "markdown": 0.5578044197035531,
+        "txt": 0.25760729866255083
+      },
+      "best_format": "json",
+      "worst_format": "txt"
+    },
+    {
+      "task_name": "Task 3",
+      "average_score": 0.6080843516025365,
+      "format_scores": {
+        "json": 0.8419864655945338,
+        "html": 0.6492819571636226,
+        "xml": 0.6884584890429251,
+        "markdown": 0.42154303279204297,
+        "txt": 0.43915181341955817
+      },
+      "best_format": "json",
+      "worst_format": "markdown"
+    },
+    {
+      "task_name": "Task 4",
+      "average_score": 0.4929109770328123,
+      "format_scores": {
+        "json": 0.5506036930886082,
+        "html": 0.5372102876326265,
+        "xml": 0.5647521315385676,
+        "markdown": 0.3649724828228321,
+        "txt": 0.447016290081427
+      },
+      "best_format": "xml",
+      "worst_format": "markdown"
+    },
+    {
+      "task_name": "Task 5",
+      "average_score": 0.38529621906311784,
+      "format_scores": {
+        "json": 0.46581594324643344,
+        "html": 0.36671716719443026,
+        "xml": 0.5076500112056981,
+        "markdown": 0.33614891668793345,
+        "txt": 0.25014905698109385
+      },
+      "best_format": "xml",
+      "worst_format": "txt"
+    },
+    {
+      "task_name": "Task 6",
+      "average_score": 0.5256750848459361,
+      "format_scores": {
+        "json": 0.7491020398350003,
+        "html": 0.5751292156084007,
+        "xml": 0.6711143566095075,
+        "markdown": 0.34297874914312965,
+        "txt": 0.29005106303364236
+      },
+      "best_format": "json",
+      "worst_format": "txt"
+    }
+  ],
+  "detailed_results": [
+    {
+      "task": "Task 1",
+      "format": "json",
+      "score": 0.9860554793025841,
+      "expected_answer": "Respondents: R1000, R1001, R1002",
+      "llm_response": "Respondents: R1000, R1001, R1002",
+      "prompt_preview": "BOUNDARY DETECTION TASK:\n\nThe following data contains responses from exactly 3 different respondents concatenated together. Identify the respondent IDs in order.\n\nData:\n{\"respondent\":\"R1000\",\"answers\":{\"name\":\"Clinician 32\",\"group\":\"junior\",\"physician_number\":32,\"dataset\":\"assistant\",\"Frequent usage...",
+      "execution_time": 0.006014108657836914
+    },
+    {
+      "task": "Task 1",
+      "format": "json",
+      "score": 0.9255640117145927,
+      "expected_answer": "Respondents: R1000, R1001, R1002",
+      "llm_response": "Respondents: R1000, R1001, R1002",
+      "prompt_preview": "BOUNDARY DETECTION TASK:\n\nThe following data contains responses from exactly 3 different respondents concatenated together. Identify the respondent IDs in order.\n\nData:\n{\"respondent\":\"R1000\",\"answers\":{\"name\":\"Clinician 33\",\"group\":\"intern\",\"physician_number\":33,\"dataset\":\"current\",\"Frequent usage\":...",
+      "execution_time": 0.006000518798828125
+    },
+    {
+      "task": "Task 1",
+      "format": "html",
+      "score": 0.8191374204574526,
+      "expected_answer": "Responses: Response 1, Response 2, Response 3",
+      "llm_response": "Responses: Response 1, Response 2, Response 3",
+      "prompt_preview": "BOUNDARY DETECTION TASK:\n\nThe following data contains responses from exactly 3 different respondents concatenated together. Identify the response numbers in order.\n\nData:\n<h3>Response 1</h3>\n<p><strong>name:</strong> Clinician 1</p>\n<p><strong>group:</strong> senior</p>\n<p><strong>physician_number:<...",
+      "execution_time": 0.001981019973754883
+    },
+    {
+      "task": "Task 1",
+      "format": "html",
+      "score": 0.5608461392308797,
+      "expected_answer": "Responses: Response 1, Response 2, Response 3",
+      "llm_response": "Respondents: Responses: Response 1, Response 2",
+      "prompt_preview": "BOUNDARY DETECTION TASK:\n\nThe following data contains responses from exactly 3 different respondents concatenated together. Identify the response numbers in order.\n\nData:\n<h3>Response 1</h3>\n<p><strong>name:</strong> Clinician 1</p>\n<p><strong>group:</strong> senior</p>\n<p><strong>physician_number:<...",
+      "execution_time": 0.003994941711425781
+    },
+    {
+      "task": "Task 1",
+      "format": "xml",
+      "score": 0.8928612136969425,
+      "expected_answer": "Responses: Response 1, Response 2, Response 3",
+      "llm_response": "Responses: Response 1, Response 2, Response 3",
+      "prompt_preview": "BOUNDARY DETECTION TASK:\n\nThe following data contains responses from exactly 3 different respondents concatenated together. Identify the response numbers in order.\n\nData:\n<response id='1'>\n      <answer question='name'>Clinician 1</answer>\n      <answer question='group'>senior</answer>\n      <answer...",
+      "execution_time": 0.003024578094482422
+    },
+    {
+      "task": "Task 1",
+      "format": "xml",
+      "score": 0.8340849963378285,
+      "expected_answer": "Responses: Response 1, Response 2, Response 3",
+      "llm_response": "Responses: Response 1, Response 2, Response 3",
+      "prompt_preview": "BOUNDARY DETECTION TASK:\n\nThe following data contains responses from exactly 3 different respondents concatenated together. Identify the response numbers in order.\n\nData:\n<response id='1'>\n      <answer question='name'>Clinician 1</answer>\n      <answer question='group'>senior</answer>\n      <answer...",
+      "execution_time": 0.006002902984619141
+    },
+    {
+      "task": "Task 1",
+      "format": "markdown",
+      "score": 0.6386964522178263,
+      "expected_answer": "Responses: Response 1, Response 2, Response 3",
+      "llm_response": "Respondents: Responses: Response 1, Response 2",
+      "prompt_preview": "BOUNDARY DETECTION TASK:\n\nThe following data contains responses from exactly 3 different respondents concatenated together. Identify the response numbers in order.\n\nData:\n### Response 1\n\n**name:** Clinician 1\n\n**group:** senior\n\n**physician_number:** 1\n\n**dataset:** current\n\n**Frequent usage:** 1\n\n*...",
+      "execution_time": 0.0009987354278564453
+    },
+    {
+      "task": "Task 1",
+      "format": "markdown",
+      "score": 0.5724354005491604,
+      "expected_answer": "Responses: Response 1, Response 2, Response 3",
+      "llm_response": "Respondents: Responses: Response 1, Response 2",
+      "prompt_preview": "BOUNDARY DETECTION TASK:\n\nThe following data contains responses from exactly 3 different respondents concatenated together. Identify the response numbers in order.\n\nData:\n### Response 1\n\n**name:** Clinician 1\n\n**group:** senior\n\n**physician_number:** 1\n\n**dataset:** current\n\n**Frequent usage:** 1\n\n*...",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 1",
+      "format": "txt",
+      "score": 0.39019934877529505,
+      "expected_answer": "Responses: Response 1, Response 2, Response 3",
+      "llm_response": "Unable to complete Task 1 with txt format - insufficient clarity in data structure",
+      "prompt_preview": "BOUNDARY DETECTION TASK:\n\nThe following data contains responses from exactly 3 different respondents concatenated together. Identify the response numbers in order.\n\nData:\nResponse 1\nname: Clinician 1\ngroup: senior\nphysician_number: 1\ndataset: current\nFrequent usage: 1\nSystem complexity: 4\nEase of us...",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 1",
+      "format": "txt",
+      "score": 0.6431707225962405,
+      "expected_answer": "Responses: Response 1, Response 2, Response 3",
+      "llm_response": "Respondents: Responses: Response 1, Response 2",
+      "prompt_preview": "BOUNDARY DETECTION TASK:\n\nThe following data contains responses from exactly 3 different respondents concatenated together. Identify the response numbers in order.\n\nData:\nResponse 1\nname: Clinician 1\ngroup: senior\nphysician_number: 1\ndataset: current\nFrequent usage: 1\nSystem complexity: 4\nEase of us...",
+      "execution_time": 0.0010004043579101562
+    },
+    {
+      "task": "Task 2",
+      "format": "json",
+      "score": 0.7502998260053353,
+      "expected_answer": "Question: I found the system unnecessarily complex. (Please rate from 1 to 5, where 1 means strongly disagree and 5 means strongly agree.)",
+      "llm_response": "The answer belongs to one of the demographic questions",
+      "prompt_preview": "ANSWER REVERSE LOOKUP TASK:\n\nGiven this respondent's complete data:\n{\n  \"answers\": {\n    \"name\": \"Clinician 41\",\n    \"group\": \"senior\",\n    \"physician_number\": 41,\n    \"dataset\": \"current\",\n    \"Frequent usage\": 2,\n    \"System complexity\": 1,\n    \"Ease of use\": 1,\n    \"Need for technical support\": 3...",
+      "execution_time": 0.00601959228515625
+    },
+    {
+      "task": "Task 2",
+      "format": "json",
+      "score": 0.5710567653890647,
+      "expected_answer": "Question: Name of the respondent",
+      "llm_response": "The answer belongs to one of the demographic questions",
+      "prompt_preview": "ANSWER REVERSE LOOKUP TASK:\n\nGiven this respondent's complete data:\n{\n  \"answers\": {\n    \"name\": \"Clinician 45\",\n    \"group\": \"senior\",\n    \"physician_number\": 45,\n    \"dataset\": \"current\",\n    \"Frequent usage\": 2,\n    \"System complexity\": 1,\n    \"Ease of use\": 5,\n    \"Need for technical support\": 5...",
+      "execution_time": 0.003003358840942383
+    },
+    {
+      "task": "Task 2",
+      "format": "html",
+      "score": 0.4106048412907355,
+      "expected_answer": "Reverse lookup not fully implemented for html",
+      "llm_response": "Unable to complete Task 2 with html format - insufficient clarity in data structure",
+      "prompt_preview": "Non-JSON reverse lookup requires parsing html structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 2",
+      "format": "html",
+      "score": 0.5320642043397864,
+      "expected_answer": "Reverse lookup not fully implemented for html",
+      "llm_response": "The answer belongs to one of the demographic questions",
+      "prompt_preview": "Non-JSON reverse lookup requires parsing html structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 2",
+      "format": "xml",
+      "score": 0.6550750844921254,
+      "expected_answer": "Reverse lookup not fully implemented for xml",
+      "llm_response": "The answer belongs to one of the demographic questions",
+      "prompt_preview": "Non-JSON reverse lookup requires parsing xml structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 2",
+      "format": "xml",
+      "score": 0.5762226861616186,
+      "expected_answer": "Reverse lookup not fully implemented for xml",
+      "llm_response": "The answer belongs to one of the demographic questions",
+      "prompt_preview": "Non-JSON reverse lookup requires parsing xml structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 2",
+      "format": "markdown",
+      "score": 0.5630851376724458,
+      "expected_answer": "Reverse lookup not fully implemented for markdown",
+      "llm_response": "The answer belongs to one of the demographic questions",
+      "prompt_preview": "Non-JSON reverse lookup requires parsing markdown structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 2",
+      "format": "markdown",
+      "score": 0.5525237017346604,
+      "expected_answer": "Reverse lookup not fully implemented for markdown",
+      "llm_response": "The answer belongs to one of the demographic questions",
+      "prompt_preview": "Non-JSON reverse lookup requires parsing markdown structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 2",
+      "format": "txt",
+      "score": 0.26242707305541624,
+      "expected_answer": "Reverse lookup not fully implemented for txt",
+      "llm_response": "Unable to complete Task 2 with txt format - insufficient clarity in data structure",
+      "prompt_preview": "Non-JSON reverse lookup requires parsing txt structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 2",
+      "format": "txt",
+      "score": 0.2527875242696854,
+      "expected_answer": "Reverse lookup not fully implemented for txt",
+      "llm_response": "Unable to complete Task 2 with txt format - insufficient clarity in data structure",
+      "prompt_preview": "Non-JSON reverse lookup requires parsing txt structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 3",
+      "format": "json",
+      "score": 0.7765996766230097,
+      "expected_answer": "Answer: 26",
+      "llm_response": "Answer found but specific value unclear",
+      "prompt_preview": "ANSWER LOOKUP TASK:\n\nFor respondent R123, what is the answer to: 'physician_number'?\n\nRespondent data:\n{\n  \"answers\": {\n    \"name\": \"Clinician 26\",\n    \"group\": \"middle\",\n    \"physician_number\": 26,\n    \"dataset\": \"current\",\n    \"Frequent usage\": 1,\n    \"System complexity\": 1,\n    \"Ease of use\": 4,\n...",
+      "execution_time": 0.0030078887939453125
+    },
+    {
+      "task": "Task 3",
+      "format": "json",
+      "score": 0.907373254566058,
+      "expected_answer": "Answer: current",
+      "llm_response": "The answer is: current",
+      "prompt_preview": "ANSWER LOOKUP TASK:\n\nFor respondent R123, what is the answer to: 'dataset'?\n\nRespondent data:\n{\n  \"answers\": {\n    \"name\": \"Clinician 22\",\n    \"group\": \"middle\",\n    \"physician_number\": 22,\n    \"dataset\": \"current\",\n    \"Frequent usage\": 2,\n    \"System complexity\": 2,\n    \"Ease of use\": 4,\n    \"Need...",
+      "execution_time": 0.0019800662994384766
+    },
+    {
+      "task": "Task 3",
+      "format": "html",
+      "score": 0.6030482007794313,
+      "expected_answer": "Answer lookup not fully implemented for html",
+      "llm_response": "Answer found but specific value unclear",
+      "prompt_preview": "Non-JSON answer lookup requires parsing html structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 3",
+      "format": "html",
+      "score": 0.6955157135478137,
+      "expected_answer": "Answer lookup not fully implemented for html",
+      "llm_response": "Answer found but specific value unclear",
+      "prompt_preview": "Non-JSON answer lookup requires parsing html structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 3",
+      "format": "xml",
+      "score": 0.6891662752693613,
+      "expected_answer": "Answer lookup not fully implemented for xml",
+      "llm_response": "Answer found but specific value unclear",
+      "prompt_preview": "Non-JSON answer lookup requires parsing xml structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 3",
+      "format": "xml",
+      "score": 0.6877507028164889,
+      "expected_answer": "Answer lookup not fully implemented for xml",
+      "llm_response": "Answer found but specific value unclear",
+      "prompt_preview": "Non-JSON answer lookup requires parsing xml structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 3",
+      "format": "markdown",
+      "score": 0.4206337302913578,
+      "expected_answer": "Answer lookup not fully implemented for markdown",
+      "llm_response": "Unable to complete Task 3 with markdown format - insufficient clarity in data structure",
+      "prompt_preview": "Non-JSON answer lookup requires parsing markdown structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 3",
+      "format": "markdown",
+      "score": 0.4224523352927282,
+      "expected_answer": "Answer lookup not fully implemented for markdown",
+      "llm_response": "Unable to complete Task 3 with markdown format - insufficient clarity in data structure",
+      "prompt_preview": "Non-JSON answer lookup requires parsing markdown structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 3",
+      "format": "txt",
+      "score": 0.36040991578841663,
+      "expected_answer": "Answer lookup not fully implemented for txt",
+      "llm_response": "Unable to complete Task 3 with txt format - insufficient clarity in data structure",
+      "prompt_preview": "Non-JSON answer lookup requires parsing txt structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 3",
+      "format": "txt",
+      "score": 0.5178937110506997,
+      "expected_answer": "Answer lookup not fully implemented for txt",
+      "llm_response": "Answer found but specific value unclear",
+      "prompt_preview": "Non-JSON answer lookup requires parsing txt structure",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 4",
+      "format": "json",
+      "score": 0.4779874392538662,
+      "expected_answer": "No matching respondents found",
+      "llm_response": "Unable to complete Task 4 with json format - insufficient clarity in data structure",
+      "prompt_preview": "MULTI-HOP REASONING TASK:\n\nFind all senior group respondents who rated 'Ease of use' as 5\n\nSurvey Data:\n{\"respondent\":\"R1000\",\"answers\":{\"name\":\"Clinician 18\",\"group\":\"intern\",\"physician_number\":18,\"dataset\":\"assistant\",\"Frequent usage\":2,\"System complexity\":3,\"Ease of use\":1,\"Need for technical sup...",
+      "execution_time": 0.0049707889556884766
+    },
+    {
+      "task": "Task 4",
+      "format": "json",
+      "score": 0.6232199469233504,
+      "expected_answer": "No matching respondents found",
+      "llm_response": "Found some matching respondents but may have missed some",
+      "prompt_preview": "MULTI-HOP REASONING TASK:\n\nFind all senior group respondents who rated 'Ease of use' as 5\n\nSurvey Data:\n{\"respondent\":\"R1000\",\"answers\":{\"name\":\"Clinician 24\",\"group\":\"middle\",\"physician_number\":24,\"dataset\":\"current\",\"Frequent usage\":1,\"System complexity\":1,\"Ease of use\":4,\"Need for technical suppo...",
+      "execution_time": 0.006023406982421875
+    },
+    {
+      "task": "Task 4",
+      "format": "html",
+      "score": 0.531984203249786,
+      "expected_answer": "Knowledge chain reasoning not fully implemented for html",
+      "llm_response": "Found some matching respondents but may have missed some",
+      "prompt_preview": "Multi-hop reasoning requires structured data parsing for html",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 4",
+      "format": "html",
+      "score": 0.5424363720154669,
+      "expected_answer": "Knowledge chain reasoning not fully implemented for html",
+      "llm_response": "Found some matching respondents but may have missed some",
+      "prompt_preview": "Multi-hop reasoning requires structured data parsing for html",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 4",
+      "format": "xml",
+      "score": 0.617384482035831,
+      "expected_answer": "Knowledge chain reasoning not fully implemented for xml",
+      "llm_response": "Found some matching respondents but may have missed some",
+      "prompt_preview": "Multi-hop reasoning requires structured data parsing for xml",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 4",
+      "format": "xml",
+      "score": 0.5121197810413043,
+      "expected_answer": "Knowledge chain reasoning not fully implemented for xml",
+      "llm_response": "Found some matching respondents but may have missed some",
+      "prompt_preview": "Multi-hop reasoning requires structured data parsing for xml",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 4",
+      "format": "markdown",
+      "score": 0.4241444911529816,
+      "expected_answer": "Knowledge chain reasoning not fully implemented for markdown",
+      "llm_response": "Unable to complete Task 4 with markdown format - insufficient clarity in data structure",
+      "prompt_preview": "Multi-hop reasoning requires structured data parsing for markdown",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 4",
+      "format": "markdown",
+      "score": 0.30580047449268266,
+      "expected_answer": "Knowledge chain reasoning not fully implemented for markdown",
+      "llm_response": "Unable to complete Task 4 with markdown format - insufficient clarity in data structure",
+      "prompt_preview": "Multi-hop reasoning requires structured data parsing for markdown",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 4",
+      "format": "txt",
+      "score": 0.46114114453501787,
+      "expected_answer": "Knowledge chain reasoning not fully implemented for txt",
+      "llm_response": "Unable to complete Task 4 with txt format - insufficient clarity in data structure",
+      "prompt_preview": "Multi-hop reasoning requires structured data parsing for txt",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 4",
+      "format": "txt",
+      "score": 0.43289143562783616,
+      "expected_answer": "Knowledge chain reasoning not fully implemented for txt",
+      "llm_response": "Unable to complete Task 4 with txt format - insufficient clarity in data structure",
+      "prompt_preview": "Multi-hop reasoning requires structured data parsing for txt",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 5",
+      "format": "json",
+      "score": 0.35731400008949443,
+      "expected_answer": "Predicted answer: 5",
+      "llm_response": "Unable to complete Task 5 with json format - insufficient clarity in data structure",
+      "prompt_preview": "ANSWER COMPLETION TASK:\n\nGiven respondent R123's other answers:\n{\n  \"name\": \"Clinician 8\",\n  \"group\": \"senior\",\n  \"physician_number\": 8,\n  \"dataset\": \"current\",\n  \"Frequent usage\": 5,\n  \"System complexity\": 1,\n  \"Ease of use\": 5,\n  \"Need for technical support\": 5,\n  \"Integration of functions\": 5,\n  ...",
+      "execution_time": 0.004008769989013672
+    },
+    {
+      "task": "Task 5",
+      "format": "json",
+      "score": 0.5743178864033724,
+      "expected_answer": "Predicted answer: 4",
+      "llm_response": "Prediction made but with low confidence",
+      "prompt_preview": "ANSWER COMPLETION TASK:\n\nGiven respondent R123's other answers:\n{\n  \"name\": \"Clinician 32\",\n  \"group\": \"junior\",\n  \"physician_number\": 32,\n  \"dataset\": \"assistant\",\n  \"Frequent usage\": 4,\n  \"System complexity\": 1,\n  \"Need for technical support\": 1,\n  \"Integration of functions\": 3,\n  \"Inconsistency\":...",
+      "execution_time": 0.002991914749145508
+    },
+    {
+      "task": "Task 5",
+      "format": "html",
+      "score": 0.4080225422847752,
+      "expected_answer": "Answer completion not fully implemented for html",
+      "llm_response": "Unable to complete Task 5 with html format - insufficient clarity in data structure",
+      "prompt_preview": "Completion task requires structured data analysis for html",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 5",
+      "format": "html",
+      "score": 0.3254117921040853,
+      "expected_answer": "Answer completion not fully implemented for html",
+      "llm_response": "Unable to complete Task 5 with html format - insufficient clarity in data structure",
+      "prompt_preview": "Completion task requires structured data analysis for html",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 5",
+      "format": "xml",
+      "score": 0.446572942869775,
+      "expected_answer": "Answer completion not fully implemented for xml",
+      "llm_response": "Unable to complete Task 5 with xml format - insufficient clarity in data structure",
+      "prompt_preview": "Completion task requires structured data analysis for xml",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 5",
+      "format": "xml",
+      "score": 0.568727079541621,
+      "expected_answer": "Answer completion not fully implemented for xml",
+      "llm_response": "Prediction made but with low confidence",
+      "prompt_preview": "Completion task requires structured data analysis for xml",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 5",
+      "format": "markdown",
+      "score": 0.44289210123698153,
+      "expected_answer": "Answer completion not fully implemented for markdown",
+      "llm_response": "Unable to complete Task 5 with markdown format - insufficient clarity in data structure",
+      "prompt_preview": "Completion task requires structured data analysis for markdown",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 5",
+      "format": "markdown",
+      "score": 0.22940573213888538,
+      "expected_answer": "Answer completion not fully implemented for markdown",
+      "llm_response": "Unable to complete Task 5 with markdown format - insufficient clarity in data structure",
+      "prompt_preview": "Completion task requires structured data analysis for markdown",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 5",
+      "format": "txt",
+      "score": 0.20520083178246876,
+      "expected_answer": "Answer completion not fully implemented for txt",
+      "llm_response": "Unable to complete Task 5 with txt format - insufficient clarity in data structure",
+      "prompt_preview": "Completion task requires structured data analysis for txt",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 5",
+      "format": "txt",
+      "score": 0.295097282179719,
+      "expected_answer": "Answer completion not fully implemented for txt",
+      "llm_response": "Unable to complete Task 5 with txt format - insufficient clarity in data structure",
+      "prompt_preview": "Completion task requires structured data analysis for txt",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 6",
+      "format": "json",
+      "score": 0.7001811948009073,
+      "expected_answer": "Value: middle",
+      "llm_response": "Semantic attribute identified but value uncertain",
+      "prompt_preview": "SEMANTIC ATTRIBUTE RETRIEVAL TASK:\n\nGiven these triples for emp:R2141:\nemp:R2141 pred:hasname \"Clinician 12\" .\nemp:R2141 pred:hasgroup \"middle\" .\nemp:R2141 pred:hasphysiciannumber \"12\" .\nemp:R2141 pred:hasdataset \"current\" .\nemp:R2141 pred:hasFrequentusage \"3\" .\nemp:R2141 pred:hasSystemcomplexity \"1...",
+      "execution_time": 0.003034830093383789
+    },
+    {
+      "task": "Task 6",
+      "format": "json",
+      "score": 0.7980228848690933,
+      "expected_answer": "Value: intern",
+      "llm_response": "Semantic attribute identified but value uncertain",
+      "prompt_preview": "SEMANTIC ATTRIBUTE RETRIEVAL TASK:\n\nGiven these triples for emp:R9316:\nemp:R9316 pred:hasname \"Clinician 3\" .\nemp:R9316 pred:hasgroup \"intern\" .\nemp:R9316 pred:hasphysiciannumber \"3\" .\nemp:R9316 pred:hasdataset \"assistant\" .\nemp:R9316 pred:hasFrequentusage \"4\" .\nemp:R9316 pred:hasSystemcomplexity \"1...",
+      "execution_time": 0.0039675235748291016
+    },
+    {
+      "task": "Task 6",
+      "format": "html",
+      "score": 0.491594712871258,
+      "expected_answer": "Semantic retrieval not fully implemented for html",
+      "llm_response": "Unable to complete Task 6 with html format - insufficient clarity in data structure",
+      "prompt_preview": "Semantic queries require RDF-like structure parsing for html",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 6",
+      "format": "html",
+      "score": 0.6586637183455434,
+      "expected_answer": "Semantic retrieval not fully implemented for html",
+      "llm_response": "Semantic attribute identified but value uncertain",
+      "prompt_preview": "Semantic queries require RDF-like structure parsing for html",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 6",
+      "format": "xml",
+      "score": 0.6011467653058207,
+      "expected_answer": "Semantic retrieval not fully implemented for xml",
+      "llm_response": "Semantic attribute identified but value uncertain",
+      "prompt_preview": "Semantic queries require RDF-like structure parsing for xml",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 6",
+      "format": "xml",
+      "score": 0.7410819479131942,
+      "expected_answer": "Semantic retrieval not fully implemented for xml",
+      "llm_response": "Semantic attribute identified but value uncertain",
+      "prompt_preview": "Semantic queries require RDF-like structure parsing for xml",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 6",
+      "format": "markdown",
+      "score": 0.31392294241084123,
+      "expected_answer": "Semantic retrieval not fully implemented for markdown",
+      "llm_response": "Unable to complete Task 6 with markdown format - insufficient clarity in data structure",
+      "prompt_preview": "Semantic queries require RDF-like structure parsing for markdown",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 6",
+      "format": "markdown",
+      "score": 0.3720345558754181,
+      "expected_answer": "Semantic retrieval not fully implemented for markdown",
+      "llm_response": "Unable to complete Task 6 with markdown format - insufficient clarity in data structure",
+      "prompt_preview": "Semantic queries require RDF-like structure parsing for markdown",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 6",
+      "format": "txt",
+      "score": 0.2596678022307166,
+      "expected_answer": "Semantic retrieval not fully implemented for txt",
+      "llm_response": "Unable to complete Task 6 with txt format - insufficient clarity in data structure",
+      "prompt_preview": "Semantic queries require RDF-like structure parsing for txt",
+      "execution_time": 0.0
+    },
+    {
+      "task": "Task 6",
+      "format": "txt",
+      "score": 0.32043432383656806,
+      "expected_answer": "Semantic retrieval not fully implemented for txt",
+      "llm_response": "Unable to complete Task 6 with txt format - insufficient clarity in data structure",
+      "prompt_preview": "Semantic queries require RDF-like structure parsing for txt",
+      "execution_time": 0.0
+    }
+  ]
+}
