@@ -3,6 +3,7 @@ import json
 import os
 import argparse
 from pathlib import Path
+import re
 
 def load_and_combine_csv_files():
     """Load both SUS CSV files and combine them"""
@@ -221,33 +222,102 @@ def convert_json_to_html(json_path, output_dir):
         return None
 
 def convert_json_to_xml(json_path, output_dir):
-    """Convert JSON data to simple XML format"""
+    """Convert JSON data to structured XML format with detailed question elements."""
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        xml_content = "<questionnaire>\n"
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
         
-        # Add questions
-        xml_content += "  <questions>\n"
-        for i, (question_key, question_desc) in enumerate(data['questions'].items()):
-            xml_content += f"    <question id='{i+1}' key='{question_key}'>{question_desc}</question>\n"
-        xml_content += "  </questions>\n"
+        xml_content = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        xml_content += '<questionnaire>\n'
         
-        # Add responses
-        xml_content += "  <responses>\n"
+        # Add Questions section
+        xml_content += '  <questions>\n'
+        
+        # Helper function to convert to camelCase
+        def to_camel_case(text):
+            words = text.replace("-", " ").replace("_", " ").split()
+            return words[0].lower() + ''.join(word.capitalize() for word in words[1:])
+        
+        # Helper function to extract MCQ options
+        def extract_mcq_options(text):
+            opt_match = re.search(r'MCQ: (.+?)\]', text)
+            if not opt_match:
+                return []
+            opts = opt_match.group(1)
+            return re.findall(r'([A-Z])\. ([^A-Z]+?)(?=(?:[A-Z]\.|$))', opts)
+        
+        # Helper function to extract Likert scale
+        def extract_likert_scale(text):
+            scale_match = re.search(r'Likert (\d+)–(\d+)', text)
+            if scale_match:
+                start, end = scale_match.groups()
+                return f"{start}-{end}"
+            return None
+        
+        # Process questions
+        for question_key, question_desc in data['questions'].items():
+            # Generate question ID
+            q_id = to_camel_case(question_key)
+            
+            # Extract question type and text
+            type_match = re.search(r'\[(.*?)\]', question_desc)
+            if type_match:
+                type_str = type_match.group(1)
+                q_text = question_desc.split('[')[0].strip()
+            else:
+                type_str = "Open-ended"
+                q_text = question_desc
+            
+            # Clean up question text
+            if question_key == "name":
+                q_text = "Name of the respondent"
+            elif question_key == "group":
+                q_text = "Group of the respondent"
+            else:
+                # Remove any scale information from the question text
+                q_text = re.sub(r'\(Rate.*?\)', '', q_text).strip()
+                q_text = re.sub(r'\(.*?=.*?\)', '', q_text).strip()
+            
+            if "MCQ" in type_str:
+                # MCQ question with options
+                xml_content += f'    <question id="{q_id}" type="mcq">{q_text}\n'
+                options = extract_mcq_options(question_desc)
+                for letter, val in options:
+                    xml_content += f'      <option value="{letter}">{val.strip()}</option>\n'
+                xml_content += '    </question>\n'
+            elif "Likert" in type_str:
+                # Likert question with scale
+                scale = extract_likert_scale(type_str)
+                if scale:
+                    xml_content += f'    <question id="{q_id}" type="likert" scale="{scale}">{q_text}</question>\n'
+                else:
+                    xml_content += f'    <question id="{q_id}" type="likert" scale="1-5">{q_text}</question>\n'
+            else:
+                # Open-ended question
+                xml_content += f'    <question id="{q_id}" type="open-ended">{q_text}</question>\n'
+        
+        xml_content += '  </questions>\n'
+        
+        # Add Responses section
+        xml_content += '  <responses>\n'
+        
         for i, response in enumerate(data['responses']):
-            xml_content += f"    <response id='{i+1}'>\n"
+            xml_content += f'    <respondent id="{i+1}">\n'
             
             for answer_key, answer_value in response['answers'].items():
-                if answer_value is not None:
-                    xml_content += f"      <answer question='{answer_key}'>{answer_value}</answer>\n"
-                else:
-                    xml_content += f"      <answer question='{answer_key}'>null</answer>\n"
+                # Convert key to camelCase for XML
+                xml_key = to_camel_case(answer_key)
+                
+                # Handle single answers
+                xml_content += f'      <{xml_key}>{answer_value}</{xml_key}>\n'
             
-            xml_content += f"    </response>\n"
-        xml_content += "  </responses>\n"
-        xml_content += "</questionnaire>\n"
+            xml_content += '    </respondent>\n'
+        
+        xml_content += '  </responses>\n'
+        xml_content += '</questionnaire>\n'
         
         # Save XML file
         xml_path = os.path.join(output_dir, 'sus_uta7_questionnaire.xml')
@@ -267,24 +337,23 @@ def convert_json_to_markdown(json_path, output_dir):
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        md_content = "# SUS-UTA7 Questionnaire\n\n"
-        
         # Add questions
-        md_content += "## Questions\n\n"
-        for i, (question_key, question_desc) in enumerate(data['questions'].items()):
-            md_content += f"{i+1}. **{question_key}:** {question_desc}\n"
+        md_content = "## Questions\n\n"
+        for question_key, question_desc in data['questions'].items():
+            md_content += f"- **{question_key}:** {question_desc}\n"
         md_content += "\n"
         
         # Add responses
         md_content += "## Responses\n\n"
         for i, response in enumerate(data['responses']):
-            md_content += f"### Response {i + 1}\n\n"
+            md_content += f"### Respondent {i + 1}\n\n"
             
             for answer_key, answer_value in response['answers'].items():
                 if answer_value is not None:
-                    md_content += f"**{answer_key}:** {answer_value}\n\n"
+                    md_content += f"- **{answer_key}:** {answer_value}\n"
                 else:
-                    md_content += f"**{answer_key}:** *No answer*\n\n"
+                    md_content += f"- **{answer_key}:** *No answer*\n"
+            md_content += "\n"
         
         # Save Markdown file
         md_path = os.path.join(output_dir, 'sus_uta7_questionnaire.md')
@@ -299,31 +368,34 @@ def convert_json_to_markdown(json_path, output_dir):
         return None
 
 def convert_json_to_txt(json_path, output_dir):
-    """Convert JSON data to simple plain text format"""
+    """Convert JSON data to structured plain text format with numbered questions and responses."""
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        txt_content = "SUS-UTA7 QUESTIONNAIRE\n\n"
+        txt_content = "Questions:\n"
         
-        # Add questions
-        txt_content += "QUESTIONS\n"
-        txt_content += "---------\n\n"
-        for i, (question_key, question_desc) in enumerate(data['questions'].items()):
-            txt_content += f"{i+1}. {question_key}: {question_desc}\n"
-        txt_content += "\n"
+        # Generate questions section with numbers
+        question_num = 1
+        for question_key, question_desc in data['questions'].items():
+            # Detect question type based on content
+            if "scale" in question_desc.lower() or "rating" in question_desc.lower():
+                txt_content += f"{question_num}. {question_key}: {question_desc} (Scale/Rating)\n"
+            else:
+                txt_content += f"{question_num}. {question_key}: {question_desc} (Open-ended)\n"
+            question_num += 1
         
-        # Add responses
-        txt_content += "RESPONSES\n"
-        txt_content += "---------\n\n"
+        # Add responses section
+        txt_content += "\nResponses:\n"
+        
         for i, response in enumerate(data['responses']):
-            txt_content += f"Response {i + 1}\n"
+            txt_content += f"Respondent {i + 1}:\n"
             
             for answer_key, answer_value in response['answers'].items():
                 if answer_value is not None:
-                    txt_content += f"{answer_key}: {answer_value}\n"
+                    txt_content += f"- {answer_key}: {answer_value}\n"
                 else:
-                    txt_content += f"{answer_key}: No answer\n"
+                    txt_content += f"- {answer_key}: (no answer)\n"
             txt_content += "\n"
         
         # Save TXT file

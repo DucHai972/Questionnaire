@@ -348,7 +348,7 @@ def convert_excel_to_json():
                 value = row[excel_col]
                 
                 # Clean and validate the value
-                if pd.isna(value) or value is None:
+                if value is None or (isinstance(value, (int, float)) and pd.isna(value)):
                     continue
                     
                 # Convert to float if possible
@@ -356,7 +356,7 @@ def convert_excel_to_json():
                     value = float(value)
                 except:
                     value = clean_text(str(value))
-                    if value == '' or value.lower() == 'nan':
+                    if value == '' or (value is not None and str(value).lower() == 'nan'):
                         continue
                 
                 # Map to JSON structure
@@ -373,10 +373,10 @@ def convert_excel_to_json():
             # Only add response if it has data
             if answers:
                 response = {
-                "respondent": str(idx + 1),
+                    "respondent": str(idx + 1),
                     "answers": answers
-            }
-            data["responses"].append(response)
+                }
+                data["responses"].append(response)
         
         # Create output directory
         output_dir = os.path.join('preprocessed_data', 'self-repoted-mental-health-college-students-2022')
@@ -411,7 +411,7 @@ def convert_json_to_html(json_path, output_dir):
         html_content = "<h1>Questions</h1>\n<ul>\n"
         
         # Add questions section
-        for question_key, question_data in data['question_metadata'].items():
+        for question_key, question_data in data['questions'].items():
             if isinstance(question_data, dict):
                 # Complex question with base question and sub-questions
                 html_content += f"  <li><strong>{question_key}:</strong>\n"
@@ -435,7 +435,7 @@ def convert_json_to_html(json_path, output_dir):
             html_content += "<ul>\n"
             
             # Get all question keys to ensure we show missing answers
-            all_question_keys = data['question_metadata'].keys()
+            all_question_keys = data['questions'].keys()
             
             for question_key in all_question_keys:
                 if question_key in response['answers']:
@@ -471,53 +471,186 @@ def convert_json_to_html(json_path, output_dir):
         return None
 
 def convert_json_to_xml(json_path, output_dir):
-    """Convert JSON data to simple XML format"""
+    """Convert JSON data to structured XML format with detailed question elements."""
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        xml_content = '<questionnaire>\n'
+        xml_content = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        xml_content += '<questionnaire>\n'
         
-        # Add questions
+        # Add Questions section
         xml_content += '  <questions>\n'
-        for question_key, question_data in data['question_metadata'].items():
-            xml_content += f'    <question>\n'
-            xml_content += f'      <title>{question_key}</title>\n'
+        
+        # Helper function to convert to camelCase
+        def to_camel_case(text):
+            words = text.replace("-", " ").replace("_", " ").split()
+            return words[0].lower() + ''.join(word.capitalize() for word in words[1:])
+        
+        # Helper function to extract MCQ options
+        def extract_mcq_options(text):
+            opt_match = re.search(r'MCQ: (.+)', text)
+            if not opt_match:
+                return []
+            opts = opt_match.group(1)
+            return re.findall(r'(\d+)\. ([^0-9]+?)(?=(?: \d+\. |$))', opts)
+        
+        # Helper function to extract Likert scale
+        def extract_likert_scale(text):
+            scale_match = re.search(r'Likert (\d+)–(\d+)', text)
+            if scale_match:
+                start, end = scale_match.groups()
+                return f"{start}-{end}"
+            return None
+
+        for question_key, question_data in data['questions'].items():
+            # Generate question ID
+            q_id = to_camel_case(question_key)
             
             if isinstance(question_data, dict):
-                xml_content += f'      <text>{question_data["base_question"]}</text>\n'
-                for sub_key, sub_question in question_data["sub_questions"].items():
-                    xml_content += f'      <subquestion>\n'
-                    xml_content += f'        <title>{sub_key}</title>\n'
-                    xml_content += f'        <text>{sub_question}</text>\n'
-                    xml_content += f'      </subquestion>\n'
+                # Complex question with sub-questions
+                base = question_data['base_question']
+                type_str = ""
+                m = re.search(r'\[(.*?)\]', base)
+                if m:
+                    type_str = m.group(1)
+                
+                # Clean question text
+                if question_key == "Parental Education":
+                    q_text = "Years of education of your parents"
+                elif question_key == "Emotional Regulation Frequency":
+                    q_text = "Emotional regulation last month"
+                elif question_key == "Anxiety Symptoms Frequency":
+                    q_text = "Anxiety symptoms past 2 weeks"
+                elif question_key == "Depressive Symptoms Frequency":
+                    q_text = "Depressive symptoms past 2 weeks"
+                else:
+                    q_text = re.sub(r'\[.*?\]', '', base).strip()
+                
+                # Get scale for Likert questions
+                scale = extract_likert_scale(type_str)
+                if scale:
+                    xml_content += f'    <question id="{q_id}" type="likert" scale="{scale}">{q_text}</question>\n'
+                else:
+                    xml_content += f'    <question id="{q_id}" type="open-ended">{q_text}</question>\n'
             else:
-                xml_content += f'      <text>{question_data}</text>\n'
-            
-            xml_content += f'    </question>\n'
+                # Simple question
+                qtext = question_data
+                m = re.search(r'\[(.*?)\]', qtext)
+                type_str = m.group(1) if m else ""
+                
+                # Clean question text
+                if question_key == "Year of birth":
+                    q_text = "What is your date of birth?"
+                elif question_key == "Gender":
+                    q_text = "What is your gender?"
+                elif question_key == "Socio-economic status":
+                    q_text = "Socio-economic status of your home"
+                elif question_key == "Ethnic identity":
+                    q_text = "Ethnic identity"
+                elif question_key == "Life satisfaction":
+                    q_text = "Life satisfaction"
+                elif question_key == "Happiness":
+                    q_text = "Happiness yesterday"
+                elif question_key == "Laughter":
+                    q_text = "Laughter yesterday"
+                elif question_key == "Learning":
+                    q_text = "Learning yesterday"
+                elif question_key == "Enjoyment":
+                    q_text = "Enjoyment yesterday"
+                elif question_key == "Worry":
+                    q_text = "Worry yesterday"
+                elif question_key == "Depression":
+                    q_text = "Depression yesterday"
+                elif question_key == "Anger":
+                    q_text = "Anger yesterday"
+                elif question_key == "Stress":
+                    q_text = "Stress yesterday"
+                elif question_key == "Loneliness":
+                    q_text = "Loneliness yesterday"
+                else:
+                    q_text = re.sub(r'\[.*?\]', '', qtext).strip()
+                
+                if "MCQ" in type_str:
+                    # MCQ question with options
+                    xml_content += f'    <question id="{q_id}" type="mcq">{q_text}\n'
+                    options = extract_mcq_options(type_str)
+                    for num, val in options:
+                        xml_content += f'      <option value="{num}">{val.strip()}</option>\n'
+                    xml_content += '    </question>\n'
+                elif "Likert" in type_str:
+                    # Likert question with scale
+                    scale = extract_likert_scale(type_str)
+                    if scale:
+                        xml_content += f'    <question id="{q_id}" type="likert" scale="{scale}">{q_text}</question>\n'
+                    else:
+                        xml_content += f'    <question id="{q_id}" type="likert">{q_text}</question>\n'
+                else:
+                    # Open-ended question
+                    xml_content += f'    <question id="{q_id}" type="open-ended">{q_text}</question>\n'
+        
         xml_content += '  </questions>\n'
         
-        # Add responses
+        # Add Responses section
         xml_content += '  <responses>\n'
+        
         for response in data['responses']:
-            xml_content += f'    <response id="{response["respondent"]}">\n'
+            xml_content += f'    <respondent id="{response["respondent"]}">\n'
             
             for answer_key, answer_value in response['answers'].items():
-                xml_content += f'      <answer>\n'
-                xml_content += f'        <question>{answer_key}</question>\n'
+                # Convert key to camelCase for XML
+                xml_key = to_camel_case(answer_key)
                 
                 if isinstance(answer_value, dict):
-                    for sub_key, sub_value in answer_value.items():
-                        xml_content += f'        <subanswer>\n'
-                        xml_content += f'          <question>{sub_key}</question>\n'
-                        xml_content += f'          <value>{sub_value}</value>\n'
-                        xml_content += f'        </subanswer>\n'
+                    # Grouped answers (like Parental Education)
+                    xml_content += f'      <{xml_key}>\n'
+                    if answer_key == "Parental Education":
+                        for sub_key, sub_value in answer_value.items():
+                            sub_xml_key = sub_key.lower()
+                            xml_content += f'        <{sub_xml_key}>{sub_value}</{sub_xml_key}>\n'
+                    elif answer_key == "Emotional Regulation Frequency":
+                        mapping = {
+                            "Upset by Unexpected Events": "unexpectedEvents",
+                            "Unable to Control Important Things": "controlImportantThings",
+                            "Lacked Confidence Handling Problems": "confidence",
+                            "Unable to Cope": "unableToCope",
+                            "Irritated by Life": "irritated",
+                            "On Top of Things": "onTop"
+                        }
+                        for sub_key, sub_value in answer_value.items():
+                            if sub_key in mapping:
+                                xml_content += f'        <{mapping[sub_key]}>{sub_value}</{mapping[sub_key]}>\n'
+                    elif answer_key == "Anxiety Symptoms Frequency":
+                        mapping = {
+                            "Feeling Nervous or On Edge": "nervous",
+                            "Trouble Relaxing": "relaxing",
+                            "Restlessness": "restlessness",
+                            "Irritability": "irritability",
+                            "Fear Something Awful Might Happen": "fear"
+                        }
+                        for sub_key, sub_value in answer_value.items():
+                            if sub_key in mapping:
+                                xml_content += f'        <{mapping[sub_key]}>{sub_value}</{mapping[sub_key]}>\n'
+                    elif answer_key == "Depressive Symptoms Frequency":
+                        mapping = {
+                            "Anhedonia": "anhedonia",
+                            "Sleep Problems": "sleepProblems",
+                            "Fatigue": "fatigue",
+                            "Appetite Changes": "appetite",
+                            "Feelings of Worthlessness": "worthlessness",
+                            "Concentration Difficulties": "concentration",
+                            "Suicidal Thoughts": "suicidalThoughts"
+                        }
+                        for sub_key, sub_value in answer_value.items():
+                            if sub_key in mapping:
+                                xml_content += f'        <{mapping[sub_key]}>{sub_value}</{mapping[sub_key]}>\n'
+                    xml_content += f'      </{xml_key}>\n'
                 else:
-                    xml_content += f'        <value>{answer_value}</value>\n'
-                
-                xml_content += f'      </answer>\n'
+                    # Simple answer
+                    xml_content += f'      <{xml_key}>{answer_value}</{xml_key}>\n'
             
-            xml_content += f'    </response>\n'
+            xml_content += '    </respondent>\n'
+        
         xml_content += '  </responses>\n'
         xml_content += '</questionnaire>\n'
         
@@ -539,21 +672,17 @@ def convert_json_to_markdown(json_path, output_dir):
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        md_content = "# Mental Health Questionnaire\n\n"
-        
         # Add questions
-        md_content += "## Questions\n\n"
+        md_content = "## Questions\n\n"
         
-        for question_key, question_data in data['question_metadata'].items():
-            md_content += f"### {question_key}\n\n"
-            
+        for question_key, question_data in data['questions'].items():
             if isinstance(question_data, dict):
-                md_content += f"{question_data['base_question']}\n\n"
+                md_content += f"- **{question_key}:** {question_data['base_question']}\n"
                 for sub_key, sub_question in question_data["sub_questions"].items():
-                    md_content += f"- {sub_key}: {sub_question}\n"
-                md_content += "\n"
+                    md_content += f"  - {sub_key}: {sub_question}\n"
             else:
-                md_content += f"{question_data}\n\n"
+                md_content += f"- **{question_key}:** {question_data}\n"
+        md_content += "\n"
         
         # Add responses
         md_content += "## Responses\n\n"
@@ -563,12 +692,12 @@ def convert_json_to_markdown(json_path, output_dir):
             
             for answer_key, answer_value in response['answers'].items():
                 if isinstance(answer_value, dict):
-                    md_content += f"**{answer_key}:**\n"
+                    md_content += f"- **{answer_key}:**\n"
                     for sub_key, sub_value in answer_value.items():
-                        md_content += f"- {sub_key}: {sub_value}\n"
-                    md_content += "\n"
+                        md_content += f"  - {sub_key}: {sub_value}\n"
                 else:
-                    md_content += f"**{answer_key}:** {answer_value}\n\n"
+                    md_content += f"- **{answer_key}:** {answer_value}\n"
+            md_content += "\n"
         
         # Save Markdown file
         md_path = os.path.join(output_dir, 'mental_health_questionnaire.md')
@@ -583,53 +712,167 @@ def convert_json_to_markdown(json_path, output_dir):
         return None
 
 def convert_json_to_txt(json_path, output_dir):
-    """Convert JSON data to simple plain text format"""
+    """Convert JSON data to structured plain text format with numbered questions and responses, matching the requested style."""
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-        
-        txt_content = "MENTAL HEALTH QUESTIONNAIRE\n\n"
-        
-        # Add questions
-        txt_content += "QUESTIONS\n"
-        txt_content += "---------\n\n"
-        
-        for question_key, question_data in data['question_metadata'].items():
-            txt_content += f"{question_key}\n"
-            
-            if isinstance(question_data, dict):
-                txt_content += f"{question_data['base_question']}\n"
-                for sub_key, sub_question in question_data["sub_questions"].items():
-                    txt_content += f"  - {sub_key}: {sub_question}\n"
-                txt_content += "\n"
-            else:
-                txt_content += f"{question_data}\n\n"
-        
-        # Add responses
-        txt_content += "RESPONSES\n"
-        txt_content += "---------\n\n"
-        
-        for response in data['responses']:
-            txt_content += f"Respondent {response['respondent']}\n"
-            
-            for answer_key, answer_value in response['answers'].items():
-                if isinstance(answer_value, dict):
-                    txt_content += f"{answer_key}:\n"
-                    for sub_key, sub_value in answer_value.items():
-                        txt_content += f"  {sub_key}: {sub_value}\n"
+
+        # Use the canonical order from get_question_metadata
+        question_metadata = get_question_metadata()
+        questions = question_metadata
+
+        txt_content = "Questions:\n"
+        question_num = 1
+        question_map = {}  # Map for later use in responses
+
+        for key, meta in questions.items():
+            if isinstance(meta, dict):
+                # Grouped question (with sub-questions)
+                base = meta["base_question"]
+                # Extract type/scale from base question
+                type_str = ""
+                m = re.search(r'\[(.*?)\]', base)
+                if m:
+                    type_str = m.group(1)
+                
+                # Clean and simplify the base question text
+                qdesc = re.sub(r'\[.*?\]', '', base).strip()
+                
+                # Simplify long descriptions for grouped questions
+                if key == "Parental Education":
+                    qdesc = "Years of education of your parents"
+                elif key == "Emotional Regulation Frequency":
+                    qdesc = "Emotional Regulation Frequency"
+                elif key == "Anxiety Symptoms Frequency":
+                    qdesc = "Anxiety Symptoms Frequency"
+                elif key == "Depressive Symptoms Frequency":
+                    qdesc = "Depressive Symptoms Frequency"
+                
+                # Format type for grouped questions
+                if "Likert" in type_str:
+                    # Parse Likert range and labels
+                    likert_match = re.search(r'Likert (\d+)–(\d+): (.+)', type_str)
+                    if likert_match:
+                        start, end, labels = likert_match.groups()
+                        type_label = f"Likert {start}–{end}: {labels}"
+                    else:
+                        # Simple Likert without labels
+                        likert_simple = re.search(r'Likert (\d+)–(\d+)', type_str)
+                        if likert_simple:
+                            start, end = likert_simple.groups()
+                            type_label = f"Likert {start}–{end}"
+                        else:
+                            type_label = type_str
                 else:
-                    txt_content += f"{answer_key}: {answer_value}\n"
-            
+                    type_label = type_str
+                
+                txt_content += f"{question_num}. {key}: {qdesc}"
+                if type_label:
+                    txt_content += f" ({type_label})"
+                txt_content += "\n"
+                
+                # Add sub-questions (simplified)
+                for sub_key in meta["sub_questions"].keys():
+                    txt_content += f"   - {sub_key}\n"
+                
+                question_map[key] = {"type": type_label, "sub_questions": list(meta["sub_questions"].keys())}
+            else:
+                # Simple question
+                qtext = meta
+                # Extract type/options from brackets
+                m = re.search(r'\[(.*?)\]', qtext)
+                type_str = m.group(1) if m else ""
+                # Clean the question text
+                qdesc = re.sub(r'\[.*?\]', '', qtext).strip()
+                
+                # Simplify some question descriptions
+                if key == "Year of birth":
+                    qdesc = "What is your date of birth?"
+                elif key == "Gender":
+                    qdesc = "What is your gender?"
+                elif key == "Socio-economic status":
+                    qdesc = "What is the socio-economic status of your home?"
+                elif key == "Ethnic identity":
+                    qdesc = "You are or are recognized as:"
+                elif key == "Life satisfaction":
+                    qdesc = "In general, how satisfied are you with life?"
+                elif key == "Happiness":
+                    qdesc = "How happy did you feel yesterday?"
+                elif key == "Laughter":
+                    qdesc = "How much did you laugh yesterday?"
+                elif key == "Learning":
+                    qdesc = "Did you learn new or exciting things yesterday?"
+                elif key == "Enjoyment":
+                    qdesc = "How much did you enjoy activities yesterday?"
+                elif key == "Worry":
+                    qdesc = "How worried did you feel yesterday?"
+                elif key == "Depression":
+                    qdesc = "How depressed did you feel yesterday?"
+                elif key == "Anger":
+                    qdesc = "How angry did you feel yesterday?"
+                elif key == "Stress":
+                    qdesc = "How much stress did you feel yesterday?"
+                elif key == "Loneliness":
+                    qdesc = "How lonely did you feel yesterday?"
+                
+                # Parse and format different question types
+                if "MCQ" in type_str:
+                    # Parse MCQ options: e.g. 'MCQ: 1. Male 2. Female'
+                    opt_match = re.search(r'MCQ: (.+)', type_str)
+                    if opt_match:
+                        opts = opt_match.group(1)
+                        # Split by number-dot pattern and clean up
+                        opt_list = re.findall(r'(\d+)\. ([^0-9]+?)(?=(?: \d+\. |$))', opts)
+                        opt_str = ', '.join([f"{num}. {val.strip()}" for num, val in opt_list])
+                        type_label = f"MCQ: {opt_str}"
+                    else:
+                        type_label = type_str
+                    txt_content += f"{question_num}. {key}: {qdesc} ({type_label})\n"
+                    question_map[key] = {"type": type_label}
+                elif "Likert" in type_str:
+                    # Parse Likert range and labels
+                    likert_match = re.search(r'Likert (\d+)–(\d+): (.+)', type_str)
+                    if likert_match:
+                        start, end, labels = likert_match.groups()
+                        type_label = f"Likert {start}–{end}: {labels}"
+                    else:
+                        # Simple Likert without labels
+                        likert_simple = re.search(r'Likert (\d+)–(\d+)', type_str)
+                        if likert_simple:
+                            start, end = likert_simple.groups()
+                            type_label = f"Likert {start}–{end}"
+                        else:
+                            type_label = type_str
+                    txt_content += f"{question_num}. {key}: {qdesc} ({type_label})\n"
+                    question_map[key] = {"type": type_label}
+                else:
+                    # Open-ended or other
+                    type_label = "Open-ended" if not type_str else type_str
+                    txt_content += f"{question_num}. {key}: {qdesc} ({type_label})\n"
+                    question_map[key] = {"type": type_label}
+            question_num += 1
+
+        txt_content += "\nResponses:\n"
+        for response in data['responses']:
+            txt_content += f"Respondent {response['respondent']}:\n"
+            for key, meta in questions.items():
+                if key not in response['answers']:
+                    continue
+                answer = response['answers'][key]
+                if isinstance(meta, dict):
+                    txt_content += f"- {key}:\n"
+                    for subq in meta["sub_questions"].keys():
+                        val = answer.get(subq, "") if isinstance(answer, dict) else ""
+                        txt_content += f"  - {subq}: {val}\n"
+                else:
+                    txt_content += f"- {key}: {answer}\n"
             txt_content += "\n"
-        
-        # Save TXT file
+
         txt_path = os.path.join(output_dir, 'mental_health_questionnaire.txt')
         with open(txt_path, 'w', encoding='utf-8') as f:
             f.write(txt_content)
-        
         print(f"✓ TXT saved to: {txt_path}")
         return txt_path
-        
     except Exception as e:
         print(f"Error creating TXT: {e}")
         return None

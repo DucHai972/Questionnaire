@@ -80,7 +80,7 @@ def generate_html(data, output_path):
     # Add Responses section
     html_content += "<h1>Responses</h1>\n"
     for i, response in enumerate(responses, 1):
-        html_content += f"<h2>Session {i}</h2>\n<ul>\n"
+        html_content += f"<h2>Respondent {i}</h2>\n<ul>\n"
         for key, value in response.items():
             formatted_value = format_value(value)
             html_content += f'  <li><strong>{key}:</strong> {formatted_value}</li>\n'
@@ -92,25 +92,64 @@ def generate_html(data, output_path):
     print(f"HTML format saved to: {output_path}")
 
 def generate_xml(data, output_path):
-    """Generate XML format."""
-    root = ET.Element("isbar_data")
+    """Generate XML format with structured questions and responses."""
+    root = ET.Element("questionnaire")
+    
+    # Helper function to parse question details
+    def parse_question_xml(key, description):
+        """Parse question description to extract type and details for XML."""
+        if "[Open-ended]" in description:
+            return "open-ended", description.replace("[Open-ended]", "").strip(), None
+        elif "[Rubric:" in description:
+            # Extract main question and rubric details
+            main_part = description.split("[Rubric:")[0].strip()
+            rubric_part = description.split("[Rubric:")[1].replace("]", "").strip()
+            
+            # Parse rubric options
+            options = {}
+            for part in rubric_part.split(", "):
+                if "=" in part:
+                    value, desc = part.split("=", 1)
+                    options[value.strip()] = desc.strip()
+            
+            return "rubric", main_part, options
+        else:
+            return "unknown", description, None
     
     # Add Questions section
     questions_elem = ET.SubElement(root, "questions")
+    
     for key, description in data["questions"].items():
+        question_type, question_text, scale_options = parse_question_xml(key, description)
+        
+        # Create question element
         question_elem = ET.SubElement(questions_elem, "question")
-        question_elem.set("key", key)
-        question_elem.text = description
+        
+        # Clean key for XML ID (replace spaces and special chars)
+        xml_id = key.replace(" ", "_").replace("(", "").replace(")", "").lower()
+        question_elem.set("id", xml_id)
+        question_elem.set("type", question_type)
+        question_elem.text = question_text
+        
+        # Add scale for rubric questions
+        if scale_options:
+            scale_elem = ET.SubElement(question_elem, "scale")
+            for value, desc in scale_options.items():
+                option_elem = ET.SubElement(scale_elem, "option")
+                option_elem.set("value", value)
+                option_elem.text = desc
     
     # Add Responses section
     responses_elem = ET.SubElement(root, "responses")
+    
     for i, response in enumerate(data["responses"], 1):
-        session_elem = ET.SubElement(responses_elem, "session")
-        session_elem.set("id", str(i))
+        respondent_elem = ET.SubElement(responses_elem, "respondent")
+        respondent_elem.set("id", str(i))
         
         for key, value in response.items():
-            field_elem = ET.SubElement(session_elem, "field")
-            field_elem.set("name", key)
+            # Clean key for XML element name
+            xml_key = key.replace(" ", "_").replace("(", "").replace(")", "").lower()
+            field_elem = ET.SubElement(respondent_elem, xml_key)
             field_elem.text = format_value(value)
     
     # Pretty print XML
@@ -129,10 +168,8 @@ def generate_markdown(data, output_path):
     questions = data["questions"]
     responses = data["responses"]
     
-    md_content = "# ISBAR Assessment Data\n\n"
-    
     # Add Questions section
-    md_content += "## Questions\n\n"
+    md_content = "## Questions\n\n"
     for key, description in questions.items():
         md_content += f"- **{key}:** {description}\n"
     md_content += "\n"
@@ -140,7 +177,7 @@ def generate_markdown(data, output_path):
     # Add Responses section
     md_content += "## Responses\n\n"
     for i, response in enumerate(responses, 1):
-        md_content += f"### Session {i}\n\n"
+        md_content += f"### Respondent {i}\n\n"
         for key, value in response.items():
             formatted_value = format_value(value)
             if key == "comments" and formatted_value != "N/A":
@@ -155,28 +192,58 @@ def generate_markdown(data, output_path):
     print(f"Markdown format saved to: {output_path}")
 
 def generate_txt(data, output_path):
-    """Generate plain text format."""
+    """Generate plain text format with structured questions and responses."""
     questions = data["questions"]
     responses = data["responses"]
     
-    txt_content = "ISBAR ASSESSMENT DATA\n"
-    txt_content += "=" * 50 + "\n\n"
+    txt_content = "Questions:\n"
     
-    # Add Questions section
-    txt_content += "QUESTIONS\n"
-    txt_content += "-" * 20 + "\n\n"
+    # Helper function to parse question details
+    def parse_question(description):
+        """Parse question description to extract type and rubric details."""
+        if "[Open-ended]" in description:
+            return "open-ended", description.replace("[Open-ended]", "").strip()
+        elif "[Rubric:" in description:
+            # Extract main question and rubric details
+            main_part = description.split("[Rubric:")[0].strip()
+            rubric_part = description.split("[Rubric:")[1].replace("]", "").strip()
+            
+            # Parse rubric options
+            options = []
+            for part in rubric_part.split(", "):
+                if "=" in part:
+                    value, desc = part.split("=", 1)
+                    options.append(f"     {value.strip()} = {desc.strip()}")
+            
+            return "rubric", main_part, options
+        else:
+            return "unknown", description
+    
+    # Generate questions section
+    question_num = 1
     for key, description in questions.items():
-        txt_content += f"{key}: {description}\n\n"
+        result = parse_question(description)
+        
+        if result[0] == "open-ended":
+            txt_content += f"{question_num}. {key}: {result[1]} (Open-ended)\n"
+        elif result[0] == "rubric":
+            txt_content += f"{question_num}. {key}: {result[1]}\n"
+            txt_content += "   Rubric scale:\n"
+            for option in result[2]:
+                txt_content += f"{option}\n"
+        else:
+            txt_content += f"{question_num}. {key}: {result[1]}\n"
+        
+        question_num += 1
     
-    # Add Responses section
-    txt_content += "\nRESPONSES\n"
-    txt_content += "-" * 20 + "\n\n"
+    txt_content += "\nResponses:\n"
+    
+    # Generate responses section  
     for i, response in enumerate(responses, 1):
-        txt_content += f"Session {i}\n"
-        txt_content += "." * 15 + "\n"
+        txt_content += f"Respondent {i}:\n"
         for key, value in response.items():
             formatted_value = format_value(value)
-            txt_content += f"{key}: {formatted_value}\n"
+            txt_content += f"- {key}: {formatted_value}\n"
         txt_content += "\n"
     
     with open(output_path, 'w', encoding='utf-8') as f:
@@ -229,7 +296,7 @@ def combine_isbar_files():
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(combined_data, f, indent=2, ensure_ascii=False)
     
-    print(f"\nCombined {len(all_answers)} sessions into: {output_file}")
+    print(f"\nCombined {len(all_answers)} respondents into: {output_file}")
     print(f"Total responses: {len(all_answers)}")
 
 def main():
@@ -240,8 +307,17 @@ def main():
     parser.add_argument("--xml", action="store_true", help="Generate XML format")
     parser.add_argument("--markdown", action="store_true", help="Generate Markdown format")
     parser.add_argument("--txt", action="store_true", help="Generate TXT format")
+    parser.add_argument("--all", action="store_true", help="Generate all formats (JSON, HTML, XML, Markdown, TXT)")
     
     args = parser.parse_args()
+    
+    # If --all flag is used, enable all format flags
+    if args.all:
+        args.json = True
+        args.html = True
+        args.xml = True
+        args.markdown = True
+        args.txt = True
     
     # If no flags provided, default to JSON generation (original behavior)
     if not any([args.json, args.html, args.xml, args.markdown, args.txt]):

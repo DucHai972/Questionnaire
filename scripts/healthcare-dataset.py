@@ -4,6 +4,7 @@ import os
 import argparse
 from xml.etree.ElementTree import Element, SubElement, tostring
 from xml.dom import minidom
+import re
 
 def generate_html_questionnaire(questionnaire, output_dir):
     # Add questions section
@@ -30,7 +31,7 @@ def generate_html_questionnaire(questionnaire, output_dir):
                 html_content += f"  <li><strong>{q_id}:</strong> {answer}</li>\n"
             else:
                 html_content += f"  <li><strong>{q_id}:</strong> (missing)</li>\n"
-        
+    
         html_content += "</ul>\n\n"
     
     output_path = os.path.join(output_dir, 'healthcare_questionnaire.html')
@@ -40,26 +41,71 @@ def generate_html_questionnaire(questionnaire, output_dir):
     return output_path
 
 def generate_xml_questionnaire(questionnaire, output_dir):
-    """Generate XML format questionnaire"""
+    """Generate XML format questionnaire with structured questions and responses."""
     root = Element('questionnaire')
     
-    # Add metadata
-    metadata = SubElement(root, 'question_metadata')
-    for q_id, question in questionnaire['question_metadata'].items():
-        question_elem = SubElement(metadata, 'question')
-        question_elem.set('id', q_id)
-        question_elem.text = question
+    # Helper function to parse question details
+    def parse_question_xml(q_id, question):
+        """Parse question description to extract type and details for XML."""
+        if "[Open-ended]" in question:
+            return "open-ended", question.replace("[Open-ended]", "").strip(), None
+        elif "[MCQ:" in question:
+            # Extract main question and MCQ options
+            main_part = question.split("[MCQ:")[0].strip()
+            mcq_part = question.split("[MCQ:")[1].replace("]", "").strip()
+            
+            # Parse MCQ options using split-based approach
+            options = {}
+            parts = mcq_part.split(' ')
+            i = 0
+            while i < len(parts):
+                if i < len(parts) - 1 and parts[i].endswith('.'):
+                    letter = parts[i][0].lower()
+                    value = parts[i+1]
+                    options[letter] = value
+                    i += 2
+                else:
+                    i += 1
+            
+            return "mcq", main_part, options
+        else:
+            return "unknown", question, None
     
-    # Add responses
-    responses = SubElement(root, 'responses')
+    # Add Questions section
+    questions_elem = SubElement(root, 'questions')
+    
+    for q_id, question in questionnaire['question_metadata'].items():
+        question_type, question_text, options = parse_question_xml(q_id, question)
+        
+        # Create question element
+        question_elem = SubElement(questions_elem, 'question')
+        
+        # Clean ID for XML
+        xml_id = q_id.replace(" ", "_").replace("(", "").replace(")", "").lower()
+        question_elem.set('id', xml_id)
+        question_elem.set('type', question_type)
+        question_elem.text = question_text
+        
+        # Add scale for MCQ questions
+        if options:
+            scale_elem = SubElement(question_elem, 'scale')
+            for value, desc in options.items():
+                option_elem = SubElement(scale_elem, 'option')
+                option_elem.set('value', value)
+                option_elem.text = desc
+    
+    # Add Responses section
+    responses_elem = SubElement(root, 'responses')
+    
     for response in questionnaire['responses']:
-        response_elem = SubElement(responses, 'response')
-        response_elem.set('respondent', response['respondent'])
+        respondent_elem = SubElement(responses_elem, 'respondent')
+        respondent_elem.set('id', response['respondent'])
         
         for q_id, answer in response['answers'].items():
-            answer_elem = SubElement(response_elem, 'answer')
-            answer_elem.set('question_id', q_id)
-            answer_elem.text = str(answer)
+            # Clean key for XML element name
+            xml_key = q_id.replace(" ", "_").replace("(", "").replace(")", "").lower()
+            field_elem = SubElement(respondent_elem, xml_key)
+            field_elem.text = str(answer)
     
     # Pretty print XML
     rough_string = tostring(root, 'unicode')
@@ -73,18 +119,18 @@ def generate_xml_questionnaire(questionnaire, output_dir):
 
 def generate_markdown_questionnaire(questionnaire, output_dir):
     """Generate Markdown format questionnaire"""
-    md_content = ""
-    
     # Add questions
-    md_content += "## Questions\n\n"
+    md_content = "## Questions\n\n"
     for q_id, question in questionnaire['question_metadata'].items():
-        md_content += f"### {q_id}\n{question}\n\n"
+        md_content += f"- **{q_id}:** {question}\n"
+    md_content += "\n"
     
     # Add sample responses
+    md_content += "## Responses\n\n"
     for i, response in enumerate(questionnaire['responses']):  # Show first 5 responses
-        md_content += f"### Respondent {response['respondent']}\n"
+        md_content += f"### Respondent {response['respondent']}\n\n"
         for q_id, answer in response['answers'].items():
-            md_content += f"- **{q_id}**: {answer}\n"
+            md_content += f"- **{q_id}:** {answer}\n"
         md_content += "\n"
     
     output_path = os.path.join(output_dir, 'healthcare_questionnaire.md')
@@ -94,20 +140,61 @@ def generate_markdown_questionnaire(questionnaire, output_dir):
     return output_path
 
 def generate_raw_text_questionnaire(questionnaire, output_dir):
-    """Generate Raw text format questionnaire"""
-    # Add questions
-    text_content = "QUESTIONS:\n"
-    text_content += "-" * 20 + "\n"
-    for q_id, question in questionnaire['question_metadata'].items():
-        text_content += f"{q_id}: {question}\n\n"
+    """Generate Raw text format questionnaire with structured questions and responses."""
     
-    # Add sample responses
-    text_content += "\nSAMPLE RESPONSES:\n"
-    text_content += "-" * 20 + "\n"
-    for response in questionnaire['responses']:  # Show first 5 responses
-        text_content += f"Respondent: {response['respondent']}\n"
+    # Helper function to parse question details
+    def parse_question_txt(question):
+        """Parse question description to extract type and details for TXT."""
+        if "[Open-ended]" in question:
+            return "open-ended", question.replace("[Open-ended]", "").strip(), None
+        elif "[MCQ:" in question:
+            # Extract main question and MCQ options
+            main_part = question.split("[MCQ:")[0].strip()
+            mcq_part = question.split("[MCQ:")[1].replace("]", "").strip()
+            
+            # Parse MCQ options using split-based approach
+            options = []
+            parts = mcq_part.split(' ')
+            i = 0
+            while i < len(parts):
+                if i < len(parts) - 1 and parts[i].endswith('.'):
+                    letter = parts[i][0].lower()
+                    value = parts[i+1]
+                    options.append(f"     {letter} = {value}")
+                    i += 2
+                else:
+                    i += 1
+            
+            return "mcq", main_part, options
+        else:
+            return "unknown", question, None
+    
+    # Add questions section
+    text_content = "Questions:\n"
+    
+    question_num = 1
+    for q_id, question in questionnaire['question_metadata'].items():
+        question_type, question_text, options = parse_question_txt(question)
+        
+        if question_type == "open-ended":
+            text_content += f"{question_num}. {q_id}: {question_text} (Open-ended)\n"
+        elif question_type == "mcq" and options:
+            text_content += f"{question_num}. {q_id}: {question_text}\n"
+            text_content += "   MCQ options:\n"
+            for option in options:
+                text_content += f"{option}\n"
+        else:
+            text_content += f"{question_num}. {q_id}: {question_text}\n"
+        
+        question_num += 1
+    
+    # Add responses section
+    text_content += "\nResponses:\n"
+    
+    for response in questionnaire['responses']:
+        text_content += f"Respondent {response['respondent']}:\n"
         for q_id, answer in response['answers'].items():
-            text_content += f"  {q_id}: {answer}\n"
+            text_content += f"- {q_id}: {answer}\n"
         text_content += "\n"
     
     output_path = os.path.join(output_dir, 'healthcare_questionnaire.txt')
@@ -198,7 +285,7 @@ def create_questionnaire_from_csv(formats_to_generate=None):
         
         # Create final questionnaire structure
         questionnaire = {
-            "questions": question_metadata,
+            "question_metadata": question_metadata,
             "responses": responses
         }
         
@@ -212,33 +299,33 @@ def create_questionnaire_from_csv(formats_to_generate=None):
         generated_files = []
         
         if 'json' in formats_to_generate:
-            # JSON format
+        # JSON format
             json_path = os.path.join(output_dir, 'healthcare_questionnaire.json')
-            with open(json_path, 'w', encoding='utf-8') as f:
-                json.dump(questionnaire, f, indent=2, ensure_ascii=False)
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(questionnaire, f, indent=2, ensure_ascii=False)
             print(f"✓ JSON saved to: {json_path}")
             generated_files.append(json_path)
         
         if 'html' in formats_to_generate:
-            # HTML format
+        # HTML format
             html_path = generate_html_questionnaire(questionnaire, output_dir)
             print(f"✓ HTML saved to: {html_path}")
             generated_files.append(html_path)
         
         if 'xml' in formats_to_generate:
-            # XML format
+        # XML format
             xml_path = generate_xml_questionnaire(questionnaire, output_dir)
             print(f"✓ XML saved to: {xml_path}")
             generated_files.append(xml_path)
         
         if 'markdown' in formats_to_generate:
-            # Markdown format
+        # Markdown format
             md_path = generate_markdown_questionnaire(questionnaire, output_dir)
             print(f"✓ Markdown saved to: {md_path}")
             generated_files.append(md_path)
         
         if 'txt' in formats_to_generate:
-            # Raw text format
+        # Raw text format
             txt_path = generate_raw_text_questionnaire(questionnaire, output_dir)
             print(f"✓ Raw text saved to: {txt_path}")
             generated_files.append(txt_path)

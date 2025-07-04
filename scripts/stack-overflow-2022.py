@@ -198,7 +198,7 @@ def convert_csv_to_json():
         df_selected['nan_percentage'] = df_selected.isnull().sum(axis=1) / len(available_questions) * 100
         
         # Sort by NaN percentage (ascending - least NaN first)
-        df_sorted = df_selected.sort_values('nan_percentage')
+        df_sorted = df_selected.sort_values('nan_percentage')  # type: ignore
         
         # Take first 500 responses with minimal NaN values
         df_filtered = df_sorted.head(500).drop('nan_percentage', axis=1)
@@ -231,7 +231,7 @@ def convert_csv_to_json():
                 value = row[column]
                 
                 # Clean and process the value
-                if pd.isna(value) or value is None:
+                if value is None or (isinstance(value, (int, float)) and pd.isna(value)):
                     response["answers"][column] = None
                 else:
                     # Convert to appropriate type
@@ -342,40 +342,108 @@ def convert_json_to_html(json_path, output_dir):
         return None
 
 def convert_json_to_xml(json_path, output_dir):
-    """Convert JSON data to simple XML format"""
+    """Convert JSON data to structured XML format with detailed question elements."""
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
         
-        def format_answer_value(value):
-            """Format answer value for display"""
-            if isinstance(value, list):
-                return ", ".join(str(v) for v in value)
-            return str(value) if value is not None else "null"
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
         
-        xml_content = "<survey>\n"
+        xml_content = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        xml_content += '<questionnaire>\n'
         
-        # Add questions
-        xml_content += "  <questions>\n"
-        for i, question in enumerate(data['questions']):
-            xml_content += f"    <question id='{i+1}'>{question}</question>\n"
-        xml_content += "  </questions>\n"
+        # Add Questions section
+        xml_content += '  <questions>\n'
         
-        # Add responses
-        xml_content += "  <responses>\n"
+        # Helper function to convert to camelCase
+        def to_camel_case(text):
+            words = text.replace("-", " ").replace("_", " ").split()
+            return words[0].lower() + ''.join(word.capitalize() for word in words[1:])
+        
+        # Helper function to extract MCQ options
+        def extract_mcq_options(text):
+            opt_match = re.search(r'MCQ(?:-Multi)?: (.+?)\]', text)
+            if not opt_match:
+                return []
+            opts = opt_match.group(1)
+            # Split by letter markers and clean up
+            options = []
+            parts = re.split(r'\s*([A-Z])\.\s*', opts)
+            for i in range(1, len(parts)-1, 2):
+                letter = parts[i]
+                value = parts[i+1].strip()
+                if value.endswith(' '):
+                    value = value[:-1]
+                options.append((letter, value))
+            return options
+        
+        # Process questions
+        for question in data['questions']:
+            # Parse question string
+            parts = question.split(':', 1)
+            if len(parts) != 2:
+                continue
+                
+            question_key = parts[0].strip()
+            if question_key == "ResponseId":
+                continue  # Skip the response ID
+                
+            # Generate question ID
+            q_id = to_camel_case(question_key)
+            
+            # Extract question type and text
+            question_desc = parts[1].strip()
+            type_match = re.search(r'\[(.*?)\]', question_desc)
+            if type_match:
+                type_str = type_match.group(1)
+                q_text = question_desc.split('[')[0].strip()
+            else:
+                type_str = "Open-ended"
+                q_text = question_desc
+            
+            if "MCQ" in type_str:
+                # MCQ question with options
+                xml_content += f'    <question id="{q_id}" type="mcq">{q_text}\n'
+                options = extract_mcq_options(question_desc)
+                for letter, val in options:
+                    xml_content += f'      <option value="{letter}">{val.strip()}</option>\n'
+                xml_content += '    </question>\n'
+            else:
+                # Open-ended question
+                xml_content += f'    <question id="{q_id}" type="open-ended">{q_text}</question>\n'
+        
+        xml_content += '  </questions>\n'
+        
+        # Add Responses section
+        xml_content += '  <responses>\n'
+        
         for i, response in enumerate(data['responses']):
-            xml_content += f"    <response id='{i+1}'>\n"
+            xml_content += f'    <respondent id="{i+1}">\n'
             
             for answer_key, answer_value in response['answers'].items():
-                formatted_value = format_answer_value(answer_value)
-                xml_content += f"      <answer question='{answer_key}'>{formatted_value}</answer>\n"
+                if answer_key == "ResponseId":
+                    continue  # Skip the response ID
+                    
+                # Convert key to camelCase for XML
+                xml_key = to_camel_case(answer_key)
+                
+                if isinstance(answer_value, list):
+                    # Handle multi-select answers
+                    xml_content += f'      <{xml_key}>'
+                    xml_content += ','.join(str(v) for v in answer_value)
+                    xml_content += f'</{xml_key}>\n'
+                else:
+                    # Handle single answers
+                    xml_content += f'      <{xml_key}>{answer_value}</{xml_key}>\n'
             
-            xml_content += f"    </response>\n"
-        xml_content += "  </responses>\n"
-        xml_content += "</survey>\n"
+            xml_content += '    </respondent>\n'
+        
+        xml_content += '  </responses>\n'
+        xml_content += '</questionnaire>\n'
         
         # Save XML file
-        xml_path = os.path.join(output_dir, 'survey_results_sample.xml')
+        xml_path = os.path.join(output_dir, 'stack_overflow_questionnaire.xml')
         with open(xml_path, 'w', encoding='utf-8') as f:
             f.write(xml_content)
         
@@ -398,22 +466,21 @@ def convert_json_to_markdown(json_path, output_dir):
                 return ", ".join(str(v) for v in value)
             return str(value) if value is not None else "*No answer*"
         
-        md_content = "# Stack Overflow Developer Survey 2022\n\n"
-        
         # Add questions
-        md_content += "## Questions\n\n"
+        md_content = "## Questions\n\n"
         for i, question in enumerate(data['questions']):
-            md_content += f"{i+1}. {question}\n"
+            md_content += f"- **Question {i+1}:** {question}\n"
         md_content += "\n"
         
         # Add responses
         md_content += "## Responses\n\n"
         for i, response in enumerate(data['responses']):
-            md_content += f"### Response {i + 1}\n\n"
+            md_content += f"### Respondent {i + 1}\n\n"
             
             for answer_key, answer_value in response['answers'].items():
                 formatted_value = format_answer_value(answer_value)
-                md_content += f"**{answer_key}:** {formatted_value}\n\n"
+                md_content += f"- **{answer_key}:** {formatted_value}\n"
+            md_content += "\n"
         
         # Save Markdown file
         md_path = os.path.join(output_dir, 'survey_results_sample.md')
@@ -428,7 +495,7 @@ def convert_json_to_markdown(json_path, output_dir):
         return None
 
 def convert_json_to_txt(json_path, output_dir):
-    """Convert JSON data to simple plain text format"""
+    """Convert JSON data to structured plain text format with numbered questions and responses."""
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -437,26 +504,46 @@ def convert_json_to_txt(json_path, output_dir):
             """Format answer value for display"""
             if isinstance(value, list):
                 return ", ".join(str(v) for v in value)
-            return str(value) if value is not None else "No answer"
+            return str(value) if value is not None else "(no answer)"
         
-        txt_content = "STACK OVERFLOW DEVELOPER SURVEY 2022\n\n"
+        def parse_question_string(question_string):
+            """Parse question string to extract code and description."""
+            if ':' in question_string:
+                parts = question_string.split(':', 1)
+                code = parts[0].strip()
+                desc = parts[1].strip()
+                
+                # Detect question type from description
+                if "[MCQ:" in desc or "[MCQ-Multi:" in desc:
+                    return code, desc, "mcq"
+                elif "[Open-ended]" in desc:
+                    return code, desc, "open-ended"
+                else:
+                    return code, desc, "open-ended"
+            else:
+                return question_string, "", "unknown"
         
-        # Add questions
-        txt_content += "QUESTIONS\n"
-        txt_content += "---------\n\n"
+        txt_content = "Questions:\n"
+        
+        # Generate questions section with numbers
         for i, question in enumerate(data['questions']):
-            txt_content += f"{i+1}. {question}\n"
-        txt_content += "\n"
+            question_num = i + 1
+            code, desc, qtype = parse_question_string(question)
+            
+            if qtype == "mcq":
+                txt_content += f"{question_num}. {code}: {desc} (MCQ)\n"
+            else:
+                txt_content += f"{question_num}. {code}: {desc} (Open-ended)\n"
         
-        # Add responses
-        txt_content += "RESPONSES\n"
-        txt_content += "---------\n\n"
+        # Add responses section
+        txt_content += "\nResponses:\n"
+        
         for i, response in enumerate(data['responses']):
-            txt_content += f"Response {i + 1}\n"
+            txt_content += f"Respondent {i + 1}:\n"
             
             for answer_key, answer_value in response['answers'].items():
                 formatted_value = format_answer_value(answer_value)
-                txt_content += f"{answer_key}: {formatted_value}\n"
+                txt_content += f"- {answer_key}: {formatted_value}\n"
             txt_content += "\n"
         
         # Save TXT file
